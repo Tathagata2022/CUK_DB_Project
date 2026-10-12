@@ -110,6 +110,96 @@ export default function ReportClient({
     document.body.removeChild(link);
   };
 
+  // Excel (.xls) Native Spreadsheet Export
+  const downloadExcel = () => {
+    if (filteredSubmissions.length === 0) {
+      alert("No data available to export");
+      return;
+    }
+
+    const fieldCols = selectedTemplate ? selectedTemplate.fields : [];
+    let tableHtml = `
+      <html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns="http://www.w3.org/TR/REC-html40">
+      <head><meta charset="utf-8"/><title>CUK Consolidated Report</title></head>
+      <body>
+        <h2>Central University of Kerala — Consolidated Institutional Report</h2>
+        <p><strong>Module:</strong> ${selectedTemplate?.name || "Consolidated Data"} | <strong>Academic Cycle:</strong> ${filterYear || "All"} | <strong>Generated:</strong> ${new Date().toLocaleDateString()}</p>
+        <table border="1" style="border-collapse:collapse;">
+          <thead>
+            <tr style="background-color:#1E3A8A; color:#FFFFFF;">
+              <th>Department</th>
+              <th>Code</th>
+              <th>School</th>
+              <th>Academic Year</th>
+              ${fieldCols.map((f: any) => `<th>${f.name}</th>`).join("")}
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${filteredSubmissions.map((sub) => {
+              const dataObj = parseData(sub.data);
+              return `<tr>
+                <td>${sub.department?.name || ""}</td>
+                <td>${sub.department?.code || ""}</td>
+                <td>${sub.department?.school || ""}</td>
+                <td>${sub.academicYear?.year || ""}</td>
+                ${fieldCols.map((f: any) => {
+                  const val = dataObj[f.id];
+                  return `<td>${val !== undefined && val !== "" ? (typeof val === "object" ? val.name || "" : val) : ""}</td>`;
+                }).join("")}
+                <td>${sub.status}</td>
+              </tr>`;
+            }).join("")}
+          </tbody>
+          <tfoot>
+            <tr style="background-color:#F1F5F9; font-weight:bold;">
+              <td colspan="4">TOTAL (Consolidated)</td>
+              ${fieldCols.map((f: any) => {
+                if (f.type === "number") {
+                  const total = filteredSubmissions.reduce((acc, sub) => {
+                    const dataObj = parseData(sub.data);
+                    const n = parseFloat(dataObj[f.id]);
+                    return acc + (isNaN(n) ? 0 : n);
+                  }, 0);
+                  return `<td>${total}</td>`;
+                }
+                return `<td>-</td>`;
+              }).join("")}
+              <td></td>
+            </tr>
+          </tfoot>
+        </table>
+      </body>
+      </html>
+    `;
+
+    const blob = new Blob([tableHtml], { type: "application/vnd.ms-excel;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.setAttribute(
+      "download",
+      `CUK_${(selectedTemplate?.name || "Report").replace(/\s+/g, "_")}_${filterYear || "All"}.xls`
+    );
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
+  // Calculate Column Totals for numeric fields
+  const columnTotals: Record<string, number> = {};
+  if (selectedTemplate) {
+    selectedTemplate.fields.forEach((f: any) => {
+      if (f.type === "number") {
+        columnTotals[f.id] = filteredSubmissions.reduce((acc, sub) => {
+          const dataObj = parseData(sub.data);
+          const n = parseFloat(dataObj[f.id]);
+          return acc + (isNaN(n) ? 0 : n);
+        }, 0);
+      }
+    });
+  }
+
   return (
     <div>
       {/* Filter Toolbar */}
@@ -220,8 +310,11 @@ export default function ReportClient({
           <button onClick={() => window.print()} className="btn" style={{ background: "rgba(255,255,255,0.1)" }}>
             🖨️ Print / PDF Report
           </button>
-          <button onClick={downloadCSV} className="btn btn-primary">
-            📥 Download CSV / Excel
+          <button onClick={downloadCSV} className="btn" style={{ background: "rgba(255,255,255,0.1)" }}>
+            📄 Download CSV
+          </button>
+          <button onClick={downloadExcel} className="btn btn-primary">
+            📥 Download Excel
           </button>
         </div>
       </div>
@@ -322,6 +415,28 @@ export default function ReportClient({
               </tr>
             )}
           </tbody>
+          {filteredSubmissions.length > 0 && selectedTemplate && (
+            <tfoot style={{ borderTop: "2px solid var(--primary)", fontWeight: "700" }}>
+              <tr style={{ background: "rgba(255, 255, 255, 0.04)" }}>
+                <td colSpan={3} style={{ padding: "14px", color: "var(--primary)", fontSize: "0.95rem" }}>
+                  TOTAL (Consolidated Sum)
+                </td>
+                {selectedTemplate.fields.map((f: any) => (
+                  <td
+                    key={f.id}
+                    style={{
+                      padding: "14px",
+                      color: f.type === "number" ? "#34D399" : "var(--text-muted)",
+                      fontWeight: "800",
+                    }}
+                  >
+                    {f.type === "number" ? columnTotals[f.id] ?? 0 : "—"}
+                  </td>
+                ))}
+                <td colSpan={2} style={{ padding: "14px" }}></td>
+              </tr>
+            </tfoot>
+          )}
         </table>
       </div>
     </div>
