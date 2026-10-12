@@ -1,36 +1,152 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# CUK_DB_Project
 
-## Getting Started
+## Central University of Kerala &mdash; Centralised Data System
 
-First, run the development server:
+A unified, centralized university data management platform designed for the **Central University of Kerala (CUK)**. The system enables departments and administrative sections to enter annual academic data into configurable dynamic tables, supports hierarchical scrutiny and multi-tier approval workflows, and allows administrators to consolidate, monitor compliance, and generate NAAC/NIRF-ready reports with Excel, CSV, and PDF exports.
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+---
+
+## 🏛️ 7-Layer Architecture Overview
+
+```text
+┌────────────────────────────────────────────────────────┐
+│ 1. USER INTERFACE                                      │
+│    Department User | HoD | Authority | System Admin    │
+└───────────────────────────┬────────────────────────────┘
+                            ↓
+┌────────────────────────────────────────────────────────┐
+│ 2. AUTHENTICATION & RBAC                               │
+│    NextAuth Credentials + Role Middleware Protection   │
+└───────────────────────────┬────────────────────────────┘
+                            ↓
+┌────────────────────────────────────────────────────────┐
+│ 3. DATA ENTRY ENGINE                                   │
+│    Dynamic Tables (Text, Number, Date, File Upload)    │
+└───────────────────────────┬────────────────────────────┘
+                            ↓
+┌────────────────────────────────────────────────────────┐
+│ 4. WORKFLOW PIPELINE                                   │
+│    Draft → Submitted → Under Review → Verified → Done  │
+│    + Return to Department with Reviewer Remarks        │
+└───────────────────────────┬────────────────────────────┘
+                            ↓
+┌────────────────────────────────────────────────────────┐
+│ 5. CENTRAL DATABASE                                    │
+│    Prisma ORM (SQLite / PostgreSQL)                    │
+└───────────────────────────┬────────────────────────────┘
+                            ↓
+┌────────────────────────────────────────────────────────┐
+│ 6. REPORT & EXPORT ENGINE                              │
+│    Consolidated Matrices | CSV | Excel | Printable PDF │
+└───────────────────────────┬────────────────────────────┘
+                            ↓
+┌────────────────────────────────────────────────────────┐
+│ 7. ADMIN DASHBOARD & BI                                │
+│    Compliance Matrix | Master Data | Full Audit Trail  │
+└────────────────────────────────────────────────────────┘
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+---
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## 🔑 Operational Roles & Demo Credentials
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+All test accounts use the password: `password123`
 
-## Learn More
+| Role | Email | Dashboard Route | Responsibilities |
+| :--- | :--- | :--- | :--- |
+| **System Administrator** | `admin@cukerala.ac.in` | `/admin` | BI Dashboard, Master Data (Depts, Users, Cycles, Templates), Reports & Exports, Audit Trail |
+| **Competent Authority** | `authority@cukerala.ac.in` | `/authority` | University-wide compliance review, evidence inspection, verify & endorse, return |
+| **Head of Department (HoD)** | `hod_cs@cukerala.ac.in` | `/hod` | Technical scrutiny of department entries, evidence download, verify & forward, return |
+| **Department Nodal Officer** | `user_cs@cukerala.ac.in` | `/dashboard` | Enter departmental figures, upload sanction evidence orders, save draft, submit to HoD |
+| **HoD (Economics)** | `hod_econ@cukerala.ac.in` | `/hod` | Scrutinize and verify Economics Department data |
+| **Dept User (Economics)** | `user_econ@cukerala.ac.in` | `/dashboard` | Resubmit returned student strength figures with reviewer remarks |
 
-To learn more about Next.js, take a look at the following resources:
+---
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## 🚀 Key Features
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+1. **Configurable Dynamic Templates:**
+   * Admins can configure custom data-entry tables (e.g., *Faculty Strength*, *Student Strength*, *Research Projects & Grants*, *Infrastructure & Labs*) without touching code.
+   * Supports `number`, `text`, `date`, and `file` upload fields (PDF, Excel, Word, JPG).
 
-## Deploy on Vercel
+2. **Hierarchical 5-Step Approval Workflow:**
+   * `DRAFT`: Saved locally by Department Nodal User.
+   * `SUBMITTED`: Forwarded to HoD for technical scrutiny.
+   * `UNDER_REVIEW`: Verified by HoD and forwarded to Competent Authority.
+   * `VERIFIED`: Endorsed by Competent Authority (IQAC / VC Office).
+   * `COMPLETED`: Finalized and archived by University Administration.
+   * `RETURNED`: Can be sent back by HoD or Authority with custom remarks requiring revisions.
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+3. **Multi-Dimensional Consolidation & Reports:**
+   * Filter university data by **Academic Year**, **School**, **Department**, **Template/Category**, and **Workflow Status**.
+   * View dynamic column breakdown (e.g. Professor, Assoc Prof, Asst Prof, Total).
+   * One-click **Download CSV / Excel** and clean **Print / PDF Report** with official university styling.
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+4. **Master Data Management:**
+   * **Departments & Sections:** Manage academic departments and administrative sections mapped to Schools.
+   * **User Directory:** Instant provisioning, deletion, and role mapping.
+   * **Academic Reporting Cycles:** Manage reporting periods (e.g. `2026-27`) with active-year toggling to preserve historical data.
+   * **Audit Trail:** Comprehensive activity logging (User, Department, Timestamp, Action, Old/New Value).
+
+---
+
+## 🛠️ Tech Stack
+
+* **Framework:** Next.js (App Router, Turbopack)
+* **Frontend:** React, Vanilla CSS Design System (Glassmorphism, Dark Mode)
+* **Authentication:** NextAuth.js (JWT Strategy, RBAC)
+* **Database & ORM:** Prisma ORM with SQLite (Local) / PostgreSQL (Cloud)
+* **Security:** bcryptjs password hashing, server-side route middleware protection
+
+---
+
+## 💻 Local Development Setup
+
+### 1. Prerequisites
+* Node.js 18.x or 20.x
+* npm
+
+### 2. Installation
+```bash
+# Clone the repository
+git clone https://github.com/Tathagata2022/CUK_DB_Project.git
+cd CUK_DB_Project
+
+# Install dependencies
+npm install
+
+# Push schema and seed database
+npx prisma db push
+node prisma/seed.js
+
+# Start development server
+npm run dev
+```
+
+Visit [http://localhost:3000](http://localhost:3000) in your browser. Use the **1-Click Prototype Role Login** buttons to immediately test any role.
+
+---
+
+## ☁️ Deployment (Render / Cloud)
+
+This project includes a `render.yaml` blueprint ready for zero-cost deployment:
+
+1. Create a repository on GitHub and push the code.
+2. Sign in to [render.com](https://render.com) with GitHub.
+3. Select **New +** &rarr; **Web Service** &rarr; choose `CUK_DB_Project`.
+4. Set Build Command:
+   ```bash
+   npm install && npx prisma db push && node prisma/seed.js && npm run build
+   ```
+5. Set Start Command:
+   ```bash
+   npm start
+   ```
+6. Add Environment Variable:
+   * `NEXTAUTH_SECRET` = `cuk_secret_key_2026`
+7. Click **Deploy Web Service** &mdash; your app will be live with full HTTPS!
+
+---
+
+## 📄 License
+Developed for the Central University of Kerala (CUK). Internal University Educational & Administrative Use.

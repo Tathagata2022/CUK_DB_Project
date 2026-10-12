@@ -152,3 +152,41 @@ main {
   padding: 40px;
   flex: 1;
 }
+
+.print-only {
+  display: none;
+}
+
+/* Print Styles for University PDF / Print Reports */
+@media print {
+  .print-only {
+    display: block !important;
+  }
+  
+  header, nav, button, .no-print {
+    display: none !important;
+  }
+  
+  body {
+    background: #ffffff !important;
+    color: #000000 !important;
+  }
+  
+  .glass-panel {
+    background: transparent !important;
+    border: 1px solid #cccccc !important;
+    box-shadow: none !important;
+    color: #000000 !important;
+  }
+  
+  th, td {
+    color: #000000 !important;
+    border-bottom: 1px solid #dddddd !important;
+  }
+  
+  .badge {
+    border: 1px solid #333333 !important;
+    color: #000000 !important;
+    background: transparent !important;
+  }
+}
