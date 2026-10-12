@@ -29,16 +29,23 @@ export default function Home() {
       setError(result.error);
       setLoading(false);
     } else {
-      if (targetEmail.includes("admin")) {
-        router.push("/admin");
-      } else if (targetEmail.includes("hod")) {
-        router.push("/hod");
-      } else if (targetEmail.includes("authority")) {
-        router.push("/authority");
-      } else {
-        router.push("/dashboard");
+      try {
+        const sessionRes = await fetch("/api/auth/session");
+        const sessionData = await sessionRes.json();
+        const userRole = sessionData?.user?.role;
+
+        if (userRole === "ADMIN") {
+          window.location.href = "/admin";
+        } else if (userRole === "HOD") {
+          window.location.href = "/hod";
+        } else if (userRole === "COMPETENT_AUTHORITY") {
+          window.location.href = "/authority";
+        } else {
+          window.location.href = "/dashboard";
+        }
+      } catch {
+        window.location.href = "/dashboard";
       }
-      router.refresh();
     }
   };
 

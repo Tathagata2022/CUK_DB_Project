@@ -9,11 +9,17 @@ export default function HeaderAuth() {
   const pathname = usePathname();
 
   const handleQuickSwitch = async (email: string) => {
-    await signIn("credentials", {
+    const res = await signIn("credentials", {
       email,
       password: "password123",
-      callbackUrl: email.includes("admin") ? "/admin" : email.includes("hod") ? "/hod" : email.includes("authority") ? "/authority" : "/dashboard",
+      redirect: false,
     });
+    if (res?.ok) {
+      if (email.includes("admin")) window.location.href = "/admin";
+      else if (email.includes("hod")) window.location.href = "/hod";
+      else if (email.includes("authority")) window.location.href = "/authority";
+      else window.location.href = "/dashboard";
+    }
   };
 
   if (status === "loading") {
