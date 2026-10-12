@@ -1,0 +1,94 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = "file:./dev.db"
+}
+
+model User {
+  id           String      @id @default(uuid())
+  email        String      @unique
+  name         String
+  passwordHash String
+  role         String      @default("DEPARTMENT_USER")
+  departmentId String?
+  department   Department? @relation(fields: [departmentId], references: [id])
+  createdAt    DateTime    @default(now())
+  updatedAt    DateTime    @updatedAt
+
+  AuditLogs    AuditLog[]
+}
+
+model Department {
+  id          String       @id @default(uuid())
+  name        String       @unique
+  code        String       @unique
+  school      String?      // e.g., "School of Physical Sciences"
+  type        String       @default("DEPARTMENT") // "DEPARTMENT" or "SECTION"
+  users       User[]
+  submissions Submission[]
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+}
+
+model AcademicYear {
+  id          String       @id @default(uuid())
+  year        String       @unique // e.g., "2026-27"
+  isActive    Boolean      @default(false)
+  submissions Submission[]
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+}
+
+model Template {
+  id          String          @id @default(uuid())
+  name        String // e.g., "Faculty Strength"
+  description String?
+  category    String?         // e.g., "Faculty", "Students", "Research", "Infrastructure"
+  fields      TemplateField[]
+  submissions Submission[]
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
+}
+
+model TemplateField {
+  id         String   @id @default(uuid())
+  templateId String
+  template   Template @relation(fields: [templateId], references: [id], onDelete: Cascade)
+  name       String // e.g., "Professor"
+  type       String // e.g., "number", "text", "file", "date"
+  required   Boolean  @default(true)
+  order      Int      @default(0)
+}
+
+model Submission {
+  id             String           @id @default(uuid())
+  templateId     String
+  template       Template         @relation(fields: [templateId], references: [id])
+  departmentId   String
+  department     Department       @relation(fields: [departmentId], references: [id])
+  academicYearId String
+  academicYear   AcademicYear     @relation(fields: [academicYearId], references: [id])
+  status         String           @default("DRAFT")
+  data           String           // Stores the actual data matching TemplateFields as JSON string
+  remarks        String?          // Review / returned remarks from HoD or Authority
+  submittedAt    DateTime?
+  createdAt      DateTime         @default(now())
+  updatedAt      DateTime         @updatedAt
+
+  @@unique([templateId, departmentId, academicYearId])
+}
+
+model AuditLog {
+  id           String   @id @default(uuid())
+  userId       String
+  user         User     @relation(fields: [userId], references: [id])
+  submissionId String?
+  action       String // e.g., "UPDATED", "SUBMITTED"
+  record       String // the table or context
+  oldValue     String?  // JSON string
+  newValue     String?  // JSON string
+  createdAt    DateTime @default(now())
+}
