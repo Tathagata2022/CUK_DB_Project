@@ -186,7 +186,10 @@ export default function HeaderAuth() {
         </div>
 
         <button
-          onClick={() => signOut({ callbackUrl: "/" })}
+          onClick={async () => {
+            await signOut({ redirect: false });
+            window.location.href = "/";
+          }}
           className="btn"
           style={{
             background: "rgba(239, 68, 68, 0.15)",
