@@ -1,0 +1,10 @@
+services:
+  - type: web
+    name: cuk-datahub
+    runtime: node
+    plan: free
+    buildCommand: npm install && npx prisma db push && node prisma/seed.js && npm run build
+    startCommand: npm start
+    envVars:
+      - key: NEXTAUTH_SECRET
+        generateValue: true
