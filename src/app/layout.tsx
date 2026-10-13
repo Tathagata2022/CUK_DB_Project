@@ -69,27 +69,7 @@ export default function RootLayout({
                 href="https://www.linkedin.com/in/tathagata-mandal-453863225/"
                 target="_blank"
                 rel="noopener noreferrer"
-                style={{
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: '6px',
-                  color: '#60A5FA',
-                  fontWeight: 600,
-                  textDecoration: 'none',
-                  padding: '4px 10px',
-                  borderRadius: '6px',
-                  border: '1px solid rgba(96,165,250,0.3)',
-                  background: 'rgba(96,165,250,0.08)',
-                  transition: 'all 0.2s ease',
-                }}
-                onMouseEnter={e => {
-                  (e.currentTarget as HTMLAnchorElement).style.background = 'rgba(96,165,250,0.18)';
-                  (e.currentTarget as HTMLAnchorElement).style.borderColor = 'rgba(96,165,250,0.6)';
-                }}
-                onMouseLeave={e => {
-                  (e.currentTarget as HTMLAnchorElement).style.background = 'rgba(96,165,250,0.08)';
-                  (e.currentTarget as HTMLAnchorElement).style.borderColor = 'rgba(96,165,250,0.3)';
-                }}
+                className="footer-linkedin-badge"
               >
                 {/* LinkedIn Icon SVG */}
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="#0A66C2" xmlns="http://www.w3.org/2000/svg">
