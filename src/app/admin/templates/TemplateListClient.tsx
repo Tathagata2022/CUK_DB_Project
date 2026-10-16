@@ -3,10 +3,12 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { useToast, ToastContainer } from "@/components/Toast";
 
 export default function TemplateListClient({ initialTemplates }: { initialTemplates: any[] }) {
   const [templates, setTemplates] = useState(initialTemplates);
   const router = useRouter();
+  const { toasts, showToast, dismissToast } = useToast();
 
   const handleDelete = async (id: string, name: string) => {
     if (!confirm(`Are you sure you want to delete template "${name}"?`)) return;
@@ -16,17 +18,19 @@ export default function TemplateListClient({ initialTemplates }: { initialTempla
       if (res.ok) {
         setTemplates((prev) => prev.filter((t) => t.id !== id));
         router.refresh();
+        showToast(`Template "${name}" deleted.`, "success");
       } else {
         const err = await res.json();
-        alert(`Cannot delete: ${err.error}`);
+        showToast(`Cannot delete: ${err.error}`, "error");
       }
     } catch {
-      alert("Network error deleting template");
+      showToast("Network error deleting template", "error");
     }
   };
 
   return (
     <div>
+      <ToastContainer toasts={toasts} dismiss={dismissToast} />
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "25px" }}>
         <div>
           <Link href="/admin" style={{ color: "var(--text-muted)", fontSize: "0.9rem" }}>&larr; Admin Dashboard</Link>

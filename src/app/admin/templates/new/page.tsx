@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { useToast, ToastContainer } from "@/components/Toast";
 
 export default function CreateTemplate() {
   const router = useRouter();
@@ -13,6 +14,7 @@ export default function CreateTemplate() {
     { name: "Field 1", type: "number", required: true },
   ]);
   const [loading, setLoading] = useState(false);
+  const { toasts, showToast, dismissToast } = useToast();
 
   const addField = () => {
     setFields([...fields, { name: "", type: "number", required: true }]);
@@ -43,11 +45,11 @@ export default function CreateTemplate() {
         router.push("/admin/templates");
       } else {
         const err = await response.json();
-        alert(`Failed: ${err.error || "Could not save template"}`);
+        showToast(`Failed: ${err.error || "Could not save template"}`, "error");
       }
     } catch (err) {
       console.error(err);
-      alert("Error creating template");
+      showToast("Error creating template", "error");
     } finally {
       setLoading(false);
     }
@@ -55,6 +57,7 @@ export default function CreateTemplate() {
 
   return (
     <main className="animate-fade-in" style={{ padding: "30px 40px" }}>
+      <ToastContainer toasts={toasts} dismiss={dismissToast} />
       <div style={{ maxWidth: "840px", margin: "0 auto" }}>
         <div style={{ marginBottom: "20px" }}>
           <Link href="/admin/templates" style={{ color: "var(--text-muted)", fontSize: "0.9rem" }}>

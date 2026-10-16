@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { useToast, ToastContainer } from "@/components/Toast";
 
 export default function UserClient({ initialUsers, departments }: { initialUsers: any[], departments: any[] }) {
   const [users, setUsers] = useState(initialUsers);
@@ -11,6 +12,7 @@ export default function UserClient({ initialUsers, departments }: { initialUsers
   const [search, setSearch] = useState("");
   const [filterRole, setFilterRole] = useState("ALL");
   const router = useRouter();
+  const { toasts, showToast, dismissToast } = useToast();
 
   useEffect(() => {
     setUsers(initialUsers);
@@ -43,20 +45,15 @@ export default function UserClient({ initialUsers, departments }: { initialUsers
         // Immediately update state
         setUsers(prev => [createdUser, ...prev]);
         setShowModal(false);
-        setFormData({
-          name: "",
-          email: "",
-          password: "",
-          role: "DEPARTMENT_USER",
-          departmentId: ""
-        });
+        setFormData({ name: "", email: "", password: "", role: "DEPARTMENT_USER", departmentId: "" });
         router.refresh();
+        showToast("User added successfully!", "success");
       } else {
         const error = await res.json();
-        alert(`Failed to add user: ${error.error || "Unknown error"}`);
+        showToast(`Failed to add user: ${error.error || "Unknown error"}`, "error");
       }
     } catch (error) {
-      alert("Error connecting to server to add user");
+      showToast("Error connecting to server to add user", "error");
     } finally {
       setLoading(false);
     }
@@ -73,12 +70,13 @@ export default function UserClient({ initialUsers, departments }: { initialUsers
       if (res.ok) {
         setUsers(prev => prev.filter(u => u.id !== id));
         router.refresh();
+        showToast(`User "${name}" removed.`, "success");
       } else {
         const err = await res.json();
-        alert(`Delete failed: ${err.error}`);
+        showToast(`Delete failed: ${err.error}`, "error");
       }
     } catch {
-      alert("Error deleting user");
+      showToast("Error deleting user", "error");
     }
   };
 
@@ -90,6 +88,7 @@ export default function UserClient({ initialUsers, departments }: { initialUsers
 
   return (
     <div>
+      <ToastContainer toasts={toasts} dismiss={dismissToast} />
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '25px' }}>
         <div>
           <Link href="/admin" style={{ color: "var(--text-muted)", fontSize: "0.9rem" }}>&larr; Admin Dashboard</Link>

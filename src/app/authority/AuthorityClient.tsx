@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { useToast, ToastContainer } from "@/components/Toast";
 
 export default function AuthorityClient({ submissions: initialSubmissions }: { submissions: any[] }) {
   const [submissions, setSubmissions] = useState(initialSubmissions);
@@ -11,6 +12,7 @@ export default function AuthorityClient({ submissions: initialSubmissions }: { s
   const [remarks, setRemarks] = useState("");
   const [filterDept, setFilterDept] = useState("ALL");
   const router = useRouter();
+  const { toasts, showToast, dismissToast } = useToast();
 
   const handleAction = async (id: string, action: "VERIFIED" | "RETURNED", actionRemarks?: string) => {
     setLoading(true);
@@ -31,11 +33,11 @@ export default function AuthorityClient({ submissions: initialSubmissions }: { s
         router.refresh();
       } else {
         const err = await res.json();
-        alert(`Failed to update status: ${err.error || "Unknown error"}`);
+        showToast(`Failed to update: ${err.error || "Unknown error"}`, "error");
       }
     } catch (err) {
       console.error(err);
-      alert("Network error updating status");
+      showToast("Network error updating status", "error");
     } finally {
       setLoading(false);
     }
@@ -54,6 +56,7 @@ export default function AuthorityClient({ submissions: initialSubmissions }: { s
 
   return (
     <div>
+      <ToastContainer toasts={toasts} dismiss={dismissToast} />
       {/* Department Filter */}
       <div style={{ display: "flex", gap: "15px", marginBottom: "20px" }}>
         <select

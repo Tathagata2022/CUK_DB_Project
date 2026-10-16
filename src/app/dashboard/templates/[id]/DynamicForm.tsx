@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { useToast, ToastContainer } from "@/components/Toast";
 
 export default function DynamicForm({
   templateId,
@@ -15,6 +16,7 @@ export default function DynamicForm({
   departmentName: string;
 }) {
   const router = useRouter();
+  const { toasts, showToast, dismissToast } = useToast();
 
   let initialData: Record<string, any> = {};
   if (existingSubmission?.data) {
@@ -27,15 +29,41 @@ export default function DynamicForm({
 
   const [formData, setFormData] = useState<Record<string, any>>(initialData);
   const [loading, setLoading] = useState(false);
+  const [errors, setErrors] = useState<Record<string, string>>({});
   const status = existingSubmission?.status || "NOT_STARTED";
   const isReadOnly = status === "SUBMITTED" || status === "UNDER_REVIEW" || status === "VERIFIED" || status === "COMPLETED";
 
   const handleChange = (fieldId: string, value: any) => {
     setFormData({ ...formData, [fieldId]: value });
+    // Clear error on change
+    if (errors[fieldId]) setErrors((prev) => { const e = { ...prev }; delete e[fieldId]; return e; });
+  };
+
+  // #2 — Client-side validation
+  const validate = (): boolean => {
+    const newErrors: Record<string, string> = {};
+    fields.forEach((field) => {
+      if (field.required) {
+        const val = formData[field.id];
+        if (val === undefined || val === "" || val === null) {
+          newErrors[field.id] = `${field.name} is required`;
+        }
+      }
+    });
+    setErrors(newErrors);
+    if (Object.keys(newErrors).length > 0) {
+      showToast(`Please fill in all required fields (${Object.keys(newErrors).length} missing)`, "warning");
+      return false;
+    }
+    return true;
   };
 
   const handleSubmit = async (e: React.FormEvent, targetStatus: string = "SUBMITTED") => {
     e.preventDefault();
+
+    // Only validate on final submit, not draft save
+    if (targetStatus === "SUBMITTED" && !validate()) return;
+
     setLoading(true);
 
     try {
@@ -46,16 +74,21 @@ export default function DynamicForm({
       });
 
       if (response.ok) {
-        alert(targetStatus === "SUBMITTED" ? "Submitted to HoD for verification!" : "Draft saved successfully!");
-        router.push("/dashboard");
-        router.refresh();
+        showToast(
+          targetStatus === "SUBMITTED" ? "✅ Submitted to HoD for verification!" : "📝 Draft saved successfully!",
+          targetStatus === "SUBMITTED" ? "success" : "info"
+        );
+        setTimeout(() => {
+          router.push("/dashboard");
+          router.refresh();
+        }, 1200);
       } else {
         const err = await response.json();
-        alert(`Failed to save: ${err.error || "Unknown error"}`);
+        showToast(`Failed to save: ${err.error || "Unknown error"}`, "error");
       }
     } catch (err) {
       console.error(err);
-      alert("Network error submitting data");
+      showToast("Network error — please check your connection and try again.", "error");
     } finally {
       setLoading(false);
     }
@@ -78,6 +111,8 @@ export default function DynamicForm({
 
   return (
     <div>
+      <ToastContainer toasts={toasts} dismiss={dismissToast} />
+
       {/* Status & Review Remarks Banner */}
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "20px", paddingBottom: "16px", borderBottom: "1px solid var(--card-border)" }}>
         <div>
@@ -122,6 +157,7 @@ export default function DynamicForm({
       <form onSubmit={(e) => handleSubmit(e, "SUBMITTED")} style={{ display: "flex", flexDirection: "column", gap: "22px" }}>
         {fields.map((field) => {
           const val = formData[field.id];
+          const hasError = !!errors[field.id];
 
           return (
             <div key={field.id}>
@@ -171,6 +207,7 @@ export default function DynamicForm({
                       value={val || ""}
                       onChange={(e) => handleChange(field.id, e.target.value)}
                       placeholder={`Enter ${field.name.toLowerCase()}...`}
+                      style={{ borderColor: hasError ? "var(--danger)" : undefined }}
                     />
                   )}
 
@@ -182,6 +219,7 @@ export default function DynamicForm({
                       value={val !== undefined ? val : ""}
                       onChange={(e) => handleChange(field.id, e.target.value === "" ? "" : Number(e.target.value))}
                       placeholder="0"
+                      style={{ borderColor: hasError ? "var(--danger)" : undefined }}
                     />
                   )}
 
@@ -192,6 +230,7 @@ export default function DynamicForm({
                       required={field.required}
                       value={val || ""}
                       onChange={(e) => handleChange(field.id, e.target.value)}
+                      style={{ borderColor: hasError ? "var(--danger)" : undefined }}
                     />
                   )}
 
@@ -209,6 +248,10 @@ export default function DynamicForm({
                         onChange={(e) => {
                           const file = e.target.files?.[0];
                           if (file) {
+                            if (file.size > 5 * 1024 * 1024) {
+                              showToast("File exceeds 5MB limit. Please choose a smaller file.", "warning");
+                              return;
+                            }
                             const reader = new FileReader();
                             reader.onloadend = () => {
                               handleChange(field.id, { name: file.name, base64: reader.result });
@@ -220,6 +263,12 @@ export default function DynamicForm({
                       <span style={{ fontSize: "0.75rem", color: "var(--text-muted)", marginTop: "4px", display: "block" }}>
                         Accepts PDF, Excel, Word, or JPG evidence (Max 5MB)
                       </span>
+                    </div>
+                  )}
+
+                  {hasError && (
+                    <div style={{ color: "var(--danger)", fontSize: "0.8rem", marginTop: "4px" }}>
+                      ⚠ {errors[field.id]}
                     </div>
                   )}
                 </>

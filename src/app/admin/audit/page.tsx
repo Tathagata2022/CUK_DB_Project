@@ -33,7 +33,7 @@ export default async function AuditTrail() {
           <tbody>
             {logs.map(log => (
               <tr key={log.id} style={{ borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
-                <td style={{ padding: '12px 16px' }}>{new Date(log.createdAt).toLocaleString()}</td>
+                <td style={{ padding: '12px 16px' }}>{new Date(log.createdAt).toLocaleString('en-IN', { timeZone: 'Asia/Kolkata', day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })} IST</td>
                 <td style={{ padding: '12px 16px', fontWeight: 'bold' }}>{log.user.name}</td>
                 <td style={{ padding: '12px 16px', color: 'var(--text-muted)' }}>
                   {log.user.role} {log.user.department ? `(${log.user.department.code})` : ''}

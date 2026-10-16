@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { useToast, ToastContainer } from "@/components/Toast";
 
 export default function DepartmentClient({ initialDepartments }: { initialDepartments: any[] }) {
   const [departments, setDepartments] = useState(initialDepartments);
@@ -11,6 +12,7 @@ export default function DepartmentClient({ initialDepartments }: { initialDepart
   const [filterType, setFilterType] = useState("ALL");
   const [search, setSearch] = useState("");
   const router = useRouter();
+  const { toasts, showToast, dismissToast } = useToast();
 
   const [formData, setFormData] = useState({
     name: "",
@@ -34,19 +36,15 @@ export default function DepartmentClient({ initialDepartments }: { initialDepart
         const created = await res.json();
         setDepartments((prev) => [...prev, { ...created, _count: { users: 0, submissions: 0 } }]);
         setShowModal(false);
-        setFormData({
-          name: "",
-          code: "",
-          school: "School of Physical Sciences",
-          type: "DEPARTMENT",
-        });
+        setFormData({ name: "", code: "", school: "School of Physical Sciences", type: "DEPARTMENT" });
         router.refresh();
+        showToast("Department created successfully!", "success");
       } else {
         const error = await res.json();
-        alert(`Error: ${error.error || "Failed to create department"}`);
+        showToast(`Error: ${error.error || "Failed to create department"}`, "error");
       }
     } catch (err) {
-      alert("Network error creating department");
+      showToast("Network error creating department", "error");
     } finally {
       setLoading(false);
     }
@@ -63,12 +61,13 @@ export default function DepartmentClient({ initialDepartments }: { initialDepart
       if (res.ok) {
         setDepartments((prev) => prev.filter((d) => d.id !== id));
         router.refresh();
+        showToast(`"${name}" deleted successfully.`, "success");
       } else {
         const err = await res.json();
-        alert(`Cannot delete: ${err.error}`);
+        showToast(`Cannot delete: ${err.error}`, "error");
       }
     } catch {
-      alert("Failed to delete department");
+      showToast("Failed to delete department", "error");
     }
   };
 
@@ -80,6 +79,7 @@ export default function DepartmentClient({ initialDepartments }: { initialDepart
 
   return (
     <div>
+      <ToastContainer toasts={toasts} dismiss={dismissToast} />
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "25px" }}>
         <div>
           <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>

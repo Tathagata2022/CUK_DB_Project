@@ -2,12 +2,14 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { useToast, ToastContainer } from "@/components/Toast";
 
 export default function YearClient({ initialYears }: { initialYears: any[] }) {
   const [years, setYears] = useState(initialYears);
   const [newYear, setNewYear] = useState("");
   const [loading, setLoading] = useState(false);
   const router = useRouter();
+  const { toasts, showToast, dismissToast } = useToast();
 
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -25,8 +27,9 @@ export default function YearClient({ initialYears }: { initialYears: any[] }) {
       setYears([added, ...years]);
       setNewYear("");
       router.refresh();
+      showToast(`Academic Year "${added.year}" created!`, "success");
     } else {
-      alert("Failed to create Academic Year");
+      showToast("Failed to create Academic Year", "error");
     }
     setLoading(false);
   };
@@ -40,22 +43,22 @@ export default function YearClient({ initialYears }: { initialYears: any[] }) {
     });
 
     if (res.ok) {
-      // Refresh to get updated list
       router.refresh();
-      // Optimistic UI update
       setYears(years.map(y => {
         if (y.id === id) return { ...y, isActive: !currentActive };
-        if (!currentActive) return { ...y, isActive: false }; // deactivate others if setting true
+        if (!currentActive) return { ...y, isActive: false };
         return y;
       }));
+      showToast("Active year updated!", "success");
     } else {
-      alert("Failed to update active status");
+      showToast("Failed to update active status", "error");
     }
     setLoading(false);
   };
 
   return (
     <div>
+      <ToastContainer toasts={toasts} dismiss={dismissToast} />
       <form onSubmit={handleCreate} style={{ display: 'flex', gap: '10px', marginBottom: '30px' }}>
         <input 
           type="text" 

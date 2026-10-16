@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useToast, ToastContainer } from "@/components/Toast";
 
 export default function ReportClient({
   initialSubmissions,
@@ -14,6 +15,7 @@ export default function ReportClient({
   academicYears: any[];
 }) {
   const [submissions, setSubmissions] = useState(initialSubmissions);
+  const { toasts, showToast, dismissToast } = useToast();
 
   const [filterYear, setFilterYear] = useState(academicYears.find((y) => y.isActive)?.year || "");
   const [filterSchool, setFilterSchool] = useState("");
@@ -54,14 +56,14 @@ export default function ReportClient({
         prev.map((s) => (s.id === id ? { ...s, status: "COMPLETED" } : s))
       );
     } else {
-      alert("Failed to mark completed");
+      showToast("Failed to mark completed", "error");
     }
   };
 
   // CSV Export with actual parsed field headers
   const downloadCSV = () => {
     if (filteredSubmissions.length === 0) {
-      alert("No data available to export");
+      showToast("No data available to export", "warning");
       return;
     }
 
@@ -113,7 +115,7 @@ export default function ReportClient({
   // Excel (.xls) Native Spreadsheet Export
   const downloadExcel = () => {
     if (filteredSubmissions.length === 0) {
-      alert("No data available to export");
+      showToast("No data available to export", "warning");
       return;
     }
 
@@ -202,6 +204,7 @@ export default function ReportClient({
 
   return (
     <div>
+      <ToastContainer toasts={toasts} dismiss={dismissToast} />
       {/* Filter Toolbar */}
       <div
         className="glass-panel"

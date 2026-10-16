@@ -35,12 +35,17 @@ export default async function AdminDashboardPage() {
     }),
   ]);
 
+  // Only count submissions in the active cycle for accurate compliance KPIs
+  const activeSubs = activeYear
+    ? submissions.filter((s) => s.academicYearId === activeYear.id)
+    : submissions;
   const totalPossible = departments.length * templates.length;
-  const completedCount = submissions.filter((s) => s.status === "COMPLETED" || s.status === "VERIFIED").length;
-  const submittedCount = submissions.filter((s) => s.status === "SUBMITTED" || s.status === "UNDER_REVIEW").length;
-  const draftCount = submissions.filter((s) => s.status === "DRAFT").length;
-  const returnedCount = submissions.filter((s) => s.status === "RETURNED").length;
+  const completedCount = activeSubs.filter((s) => s.status === "COMPLETED" || s.status === "VERIFIED").length;
+  const submittedCount = activeSubs.filter((s) => s.status === "SUBMITTED" || s.status === "UNDER_REVIEW").length;
+  const draftCount = activeSubs.filter((s) => s.status === "DRAFT").length;
+  const returnedCount = activeSubs.filter((s) => s.status === "RETURNED").length;
   const complianceRate = totalPossible > 0 ? Math.round((completedCount / totalPossible) * 100) : 0;
+
 
   return (
     <main className="animate-fade-in" style={{ padding: "30px 40px" }}>

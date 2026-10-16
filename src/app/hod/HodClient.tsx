@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { useToast, ToastContainer } from "@/components/Toast";
 
 export default function HodClient({ submissions: initialSubmissions }: { submissions: any[] }) {
   const [submissions, setSubmissions] = useState(initialSubmissions);
@@ -9,7 +10,10 @@ export default function HodClient({ submissions: initialSubmissions }: { submiss
   const [inspectSub, setInspectSub] = useState<any | null>(null);
   const [returnModalSub, setReturnModalSub] = useState<any | null>(null);
   const [returnRemarks, setReturnRemarks] = useState("");
+  const [search, setSearch] = useState("");
+  const [filterStatus, setFilterStatus] = useState("ALL");
   const router = useRouter();
+  const { toasts, showToast, dismissToast } = useToast();
 
   const handleAction = async (id: string, action: "UNDER_REVIEW" | "RETURNED", remarks?: string) => {
     setLoading(true);
@@ -31,11 +35,11 @@ export default function HodClient({ submissions: initialSubmissions }: { submiss
         router.refresh();
       } else {
         const err = await res.json();
-        alert(`Failed to update status: ${err.error || "Unknown error"}`);
+        showToast(`Failed to update: ${err.error || "Unknown error"}`, "error");
       }
     } catch (err) {
       console.error(err);
-      alert("Network error updating status");
+      showToast("Network error updating status", "error");
     } finally {
       setLoading(false);
     }
@@ -49,8 +53,45 @@ export default function HodClient({ submissions: initialSubmissions }: { submiss
     }
   };
 
+  const filteredSubs = submissions.filter((sub) => {
+    if (filterStatus !== "ALL" && sub.status !== filterStatus) return false;
+    if (search && !sub.template?.name?.toLowerCase().includes(search.toLowerCase()) &&
+        !sub.academicYear?.year?.includes(search)) return false;
+    return true;
+  });
+
   return (
     <div>
+      <ToastContainer toasts={toasts} dismiss={dismissToast} />
+
+      {/* Search & Filter Bar */}
+      <div style={{ display: "flex", gap: "12px", marginBottom: "20px", flexWrap: "wrap" }}>
+        <input
+          type="text"
+          className="input-field"
+          placeholder="Search by template or year..."
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          style={{ maxWidth: "280px" }}
+        />
+        <select
+          className="input-field"
+          value={filterStatus}
+          onChange={(e) => setFilterStatus(e.target.value)}
+          style={{ maxWidth: "220px" }}
+        >
+          <option value="ALL">All Statuses</option>
+          <option value="SUBMITTED">Submitted</option>
+          <option value="UNDER_REVIEW">Under Review</option>
+          <option value="VERIFIED">Verified</option>
+          <option value="RETURNED">Returned</option>
+          <option value="DRAFT">Draft</option>
+        </select>
+        <span style={{ fontSize: "0.85rem", color: "var(--text-muted)", alignSelf: "center" }}>
+          {filteredSubs.length} of {submissions.length} records
+        </span>
+      </div>
+
       <div className="glass-panel" style={{ overflowX: "auto" }}>
         <table style={{ width: "100%", borderCollapse: "collapse", textAlign: "left" }}>
           <thead>
@@ -63,7 +104,7 @@ export default function HodClient({ submissions: initialSubmissions }: { submiss
             </tr>
           </thead>
           <tbody>
-            {submissions.map((sub: any) => (
+            {filteredSubs.map((sub: any) => (
               <tr key={sub.id} style={{ borderBottom: "1px solid rgba(255,255,255,0.05)" }}>
                 <td style={{ padding: "12px 16px", fontWeight: "600" }}>{sub.template?.name}</td>
                 <td style={{ padding: "12px 16px" }}>{sub.academicYear?.year}</td>
@@ -134,10 +175,10 @@ export default function HodClient({ submissions: initialSubmissions }: { submiss
                 </td>
               </tr>
             ))}
-            {submissions.length === 0 && (
+            {filteredSubs.length === 0 && (
               <tr>
                 <td colSpan={5} style={{ padding: "24px", textAlign: "center", color: "var(--text-muted)" }}>
-                  No submissions found for your department.
+                  {submissions.length === 0 ? "No submissions found for your department." : "No submissions match your search."}
                 </td>
               </tr>
             )}
